@@ -24,3 +24,11 @@ You can add options to executable code like this
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+#Areas de un triangulo
+
+A=4*8
+A
+
+```
