@@ -1,0 +1,513 @@
+---
+title: "Aplicación de las técnicas Multivariantes"
+author: "Jeimy Merary Romero Sandoval"
+format: pdf
+date: 2024-05-02
+editor: visual
+---
+
+```{=tex}
+\tableofcontents
+\newpage
+\section{Aplicacion de las Tecnicas}
+```
+## Ejercicio 1:
+
+Considera que eres un consultor de negocios especializado en el análisis de
+
+pequeñas empresas. Estás investigando diversas características operativas y de gestión en 20 peque- ñas empresas para ayudarles a optimizar su rendimiento. Las empresas han sido evaluadas según
+
+las siguientes características: Innovación: Capacidad para introducir nuevos productos o servicios. Comunicación: Efectividad en la comunicación interna y externa. Eficiencia: Uso efectivo de los recursos. Responsabilidad: Adherencia a las regulaciones y compromisos sociales. Atención al Cliente: Calidad en el trato y servicio a clientes. Comunidad: Participación y contribución a la comunidad local. En tu esfuerzo por entender cómo varias características de las empresas pueden influir en su éxito general, te interesa descubrir si algunas de estas características tienden a presentarse juntas o si se influencian mutuamente en el desempeño empresarial.
+
+**¿Qué enfoque utilizarías para evaluar si ciertas características tienden a agruparse en ciertos perfiles de empresas?**
+
+haciendo los siguientes pasos:
+
+```{r}
+library(readxl)
+dato <- read_excel("C:/Users/DELL/Documents/seminario/ejercicio 1.xlsx")
+dato
+```
+
+```{r}
+datas <- scale(dato,center = TRUE,scale = TRUE)
+head(datas)
+```
+
+-   **Innovacion**: Los valores en esta columna representan la capacidad de las empresas para introducir nuevos productos o servicios. Las puntuaciones más altas indican una mayor capacidad de innovación en comparación con el promedio de las empresas.
+
+-   **Comunicacion**: Aquí se evalúa la efectividad en la comunicación interna y externa. Puntuaciones más altas indican una mejor comunicación en general.
+
+-   **Eficiencia**: Esta variable refleja el uso efectivo de los recursos por parte de las empresas. Puntuaciones más altas sugieren una mayor eficiencia en la gestión de recursos.
+
+-   **Responsabilidad**: Evalúa la adherencia a las regulaciones y compromisos sociales. Puntuaciones más altas indican una mayor responsabilidad empresarial.
+
+-   **Atencion_al_Cliente**: Refleja la calidad en el trato y servicio a los clientes. Valores más altos representan una mejor atención al cliente.
+
+-   **Comunidad**: Evalúa la participación y contribución de las empresas a la comunidad local. Puntuaciones más altas indican una mayor implicación comunitaria
+
+```{r}
+#install.packages("NbClust")
+library(NbClust)
+set.seed(1234)
+res.nbclust <- NbClust(datas, distance = "euclidean",
+                  min.nc = 2, max.nc = 10, 
+                  method = "complete", index ="all")
+```
+
+se observa en la siguiente grafia que se puede dividrir los resultados en 2 clusters , esto significa que los datos pueden agruparse de manera más efectiva en dos grupos distintos en lugar de más o menos clusters.
+
+```{r}
+#install.packages("clValid")
+library(clValid)
+validclus  <- clValid(datas, nClust = 2:5, 
+                clMethods = c("hierarchical","kmeans","diana","fanny","pam","clara","agnes"),
+                validation = "internal")
+summary(validclus)
+```
+
+Observando esos valores dice que hay que tomar 2 clusters, lo cual se puede representar en la siguiente grafica.
+
+```{r}
+library(factoextra)
+
+dist <- dist(datas,method = "euclidean")
+
+modelo <- hclust(dist, method = "complete")
+
+
+modelo <- hclust(dist(dist))
+fviz_dend(modelo, cex = 0.5, k=2, 
+          rect = TRUE, 
+          k_colors = "jco",
+          rect_border = "jco", 
+          rect_fill = TRUE,
+          horiz = TRUE,
+          ggtheme = theme_bw())
+```
+
+observando la grafica anterior se puede cocluir que si hay que dividir en 2 cluster, tambien se puede decir que las empresas que estan dentro de esos cluster tienen mucha relacion hablando sobre las calificaciones.
+
+**¿Cómo podrías organizar estos datos para identificar patrones de rendimiento entre estas empresas?**
+
+-Es posible que las empresas en el primer cluster compartan características similares entre sí que las distingan claramente del segundo cluster. Podrían tener estrategias de marketing similares, enfoques de gestión comunes o perfiles de clientes específicos.
+
+-Cuando se agrupan las empresas en dos grupos basándonose en ciertas características, como por ejemplo cómo se manejan, cómo se promocionan o qué tipo de clientes tienen, se encuentra que algunas de estas características tienden a ir de la mano en cada grupo. Esto significa que ciertas cosas que hacen estas empresas, como su forma de trabajar o cómo se presentan al público, parecen tener un impacto conjunto en su éxito. Es como si estas características se ayudaran entre sí para que las empresas funcionen bien en su conjunto.
+
+\- Al agrupar las empresas en función de ciertas características que están relacionadas con el éxito empresarial, como la eficiencia operativa, la satisfacción del cliente o la innovación, el hecho de que se formen dos grupos distintos indica que hay combinaciones de estas características que tienden a estar juntas y que pueden influenciarse de manera positiva entre sí para mejorar el desempeño general de las empresas en cada grupo.
+
+-Si las características están relacionadas con el mercado al que se dirige la empresa o su posición competitiva, el cluster en 2 grupos podría indicar diferentes segmentos de mercado o niveles de competencia.
+
+-Al identificar dos grupos distintos, se puede evaluar qué características están presentes en cada cluster y cómo estas podrían estar contribuyendo al éxito o al desempeño deficiente. Esto podría proporcionar sobre áreas de mejora o estrategias exitosas que podrían aplicarse en otros contextos.
+
+## Ejercicio 2:
+
+En el estudio de la enología, el análisis de las propiedades químicas de los vinos es fundamental para entender sus características y diferencias. Se dispone de un conjunto de datos que incluye 13 concentraciones químicas diferentes de muestras de vino obtenidas de tres tipos de cultivares distintos en el dataset ”wine” de la libreria ”ratle”.El conjunto de datos contiene mediciones para 13 variables químicas diferentes (como el alcohol, el magnesio, los taninos, entre otros) para cada muestra de vino. Dado que se conocen los cultivares de origen para cada muestra, ¿cómo podrías utilizar las mediciones químicas disponibles para identificar y describir las diferencias claras entre estos grupos?
+
+```{r}
+library(rattle)
+library(psych)
+library(polycor)
+library(ggcorrplot)
+wine_s <- wine[1:178,2:14] # subconjunto de datos
+mat_cor <- hetcor(wine_s)$correlations #matriz de correlación policorica
+ggcorrplot(mat_cor,type="lower",hc.order = T)
+```
+
+```{r}
+library(psych)
+cortest.bartlett(mat_cor)->p_esf
+p_esf$p
+```
+
+Dado que el p-valor es mucho menor que cualquier nivel de significancia, se rechaza la hipótesis nula. Esto significa que la matriz de correlación no es una matriz identidad, sugiriendo fuertemente que las variables de estudio están correlacionadas entre sí. lo que significa que se puede aplicar métodos de análisis como el análisis factorial o análisis de componentes principales. Esto implica que se podra aplicar estos métodos para reducir la dimensiones en los datos.
+
+```{r}
+KMO(mat_cor)
+```
+
+El resultado es 0.78 lo que dice que se puede continuar con el análisis Factorial.
+
+```{r}
+### prueba de dos modelos con tres factores
+modelo1<-fa(mat_cor,
+           nfactors = 3,
+           rotate = "none",
+           fm="mle") # modelo máxima verosimilitud
+
+modelo2<-fa(mat_cor,
+           nfactors = 3,
+           rotate = "none",
+           fm="minres") # modelo minimo residuo
+######comparando las comunalidades
+sort(modelo1$communality,decreasing = T)->c1
+sort(modelo2$communality,decreasing = T)->c2
+head(cbind(c1,c2))
+```
+
+ambos métodos son capaces de extraer estructuras de factor significativas de los datos,
+
+```{r}
+####comparacion de las unicidades 
+sort(modelo1$uniquenesses,decreasing = T)->u1
+sort(modelo2$uniquenesses,decreasing = T)->u2
+head(cbind(u1,u2))
+```
+
+La comparación muestra que la unicidad tiende a ser generalmente más alta en el modelo 1 que en el modelo 2 para la mayoría de las variables, aunque hay excepciones como en Proanthocyanins y Ash, donde el modelo 2 muestra una unicidad más alta o más baja, respectivamente,esto puede reflejar la sensibilidad de cada método a la estructura específica de los datos y a las relaciones entre variables., las unicidades altas en ciertas variables como Magnesium y Malic sugieren que estos elementos pueden tener efectos o características que son distintos y no se explican bien a través de los factores comunes utilizados en estos modelos.
+
+Esto puede ser crucial para la interpretación en contextos donde estas variables son críticas. En resumen, mientras que las comunalidades reflejan cuánto contribuyen los factores comunes a explicar cada variable, las unicidades destacan la varianza que estos factores no logran captar, resaltando la singularidad de cada variable.
+
+```{r}
+scree(mat_cor)
+
+```
+
+Al comparar las líneas de PC y FA, es común observar que los autovalores de PCA son generalmente más altos que los de FA para los primeros componentes/factores. Esto se debe a que PCA captura toda la varianza, mientras que el análisis factorial intenta identificar factores latentes que expliquen las correlaciones entre las variables observadas,los factores iniciales suelen ser más influyentes, es decir, explican una mayor proporción de la varianza total compartida entre las variables
+
+```{r}
+fa.parallel(mat_cor,n.obs=178,fa="fa",fm="minres")
+```
+
+Al observar la grafica anterior se puede dar la interpretación que ambas partes de la gráfica sugiere que el número óptimo de factores a retener podría ser alrededor de cuatro, esto se basa en que la varianza explicada por los factores se estabiliza o disminuye gradualmente después de cuatro factores, lo que indica que agregar más factores no mejora sustancialmente la explicación de la varianza en los datos.
+
+```{r}
+#Rotaciones
+library(GPArotation)
+names(wine)
+str(wine_s)
+str(wine)
+
+# Convertir a numérico si es necesario
+wine_s <- as.data.frame(lapply(wine_s, as.numeric))
+wine <- as.data.frame(lapply(wine, as.numeric))
+
+# Verificar nuevamente tipos de datos y valores faltantes
+str(wine_s)
+str(wine)
+
+# Define los métodos de rotación
+rot <- c("none", "varimax", "quartimax", "Promax")
+
+# Define la función bi_mod
+bi_mod <- function(tipo, wine_s, wine) {
+  biplot.psych(fa(wine_s, nfactors = 2, fm = "minres", rotate = tipo), 
+               main = paste("Biplot con rotación", tipo), 
+               col = c(2, 3, 4), pch = c(21, 18), group = wine[, "Malic"])
+}
+
+# Aplicar bi_mod corregido
+results <- sapply(rot, function(tipo) bi_mod(tipo, wine_s, wine))
+
+
+```
+
+```{r}
+modelo_varimax<-fa(mat_cor,nfactors = 4,rotate = "varimax",
+              fa="minres")
+fa.diagram(modelo_varimax)
+```
+
+MR1: Este factor está asociado con altas cargas para las variables flavanoids , phenols , proanthocyanins y Nonflavanoids . Estas variables podrían estar relacionadas en términos de características químicas o propiedades de los vinos que afectan a estas medidas. La línea punteada indica la contribución de este factor a estas variables.
+
+MR2: Este factor está asociado principalmente con Proline y Alcohol , y en menor medida con Color y Magnesium . Esto sugiere que estas variables podrían compartir una influencia común o estar relacionadas de alguna manera en el análisis de las características del vino.
+
+MR3: Este factor está asociado principalmente con Ash y Alcalinity . Estas variables podrían tener una relación en términos de las propiedades físicas o químicas del vino relacionadas con la ceniza y la alcalinidad.
+
+MR4: Este factor está asociado principalmente con Hue y Malic . Estas variables podrían tener una relación en términos del color y la acidez del vino.
+
+```{r}
+print(modelo_varimax$loadings,cut=0) 
+
+```
+
+MR1: Este factor estan asociados con las características químicas que contribuyen a la calidad y sabor del vino. Las variables con altos loadings en este factor, como Flavanoids, Phenols y Proanthocyanins, son conocidas por sus efectos en el aroma, sabor y propiedades antioxidantes del vino. Un vino con altos loadings en este factor podría ser percibido como más complejo en sabor y con un perfil antioxidante más marcado.
+
+MR2: Aquí se encuentran variables como Alcohol, Proline y Color. Estas características pueden estar relacionadas con la fortaleza y el cuerpo del vino, así como con su color y tonalidad. Un vino con altos loadings en este factor podría ser percibido como más robusto en sabor y con una mayor concentración de compuestos relacionados con el color.
+
+MR4: Este factor está asociado con variables como Hue y Ash. La hue se refiere al tono del color del vino, mientras que Ash puede estar relacionado con las propiedades de la ceniza en los vinos. Un vino con altos loadings en este factor podría tener un tono de color particular y propiedades asociadas con la ceniza, que pueden influir en su percepción visual y en boca.
+
+MR3: Este factor involucra variables como Alcalinity y Nonflavanoids. La alcalinidad puede influir en la sensación en boca y el equilibrio del vino, mientras que los compuestos no flavonoides pueden tener efectos específicos en el perfil sensorial y la estructura del vino. Un vino con altos loadings en este factor podría tener una sensación en boca particular y ciertas características sensoriales distintivas
+
+## Ejercicio 3:
+
+Un consorcio de investigación ambiental está estudiando el impacto y las prácticas de sostenibilidad en 13 ciudades de tamaño mediano. Cada ciudad ha sido evaluada con base en 8 indicadores clave que reflejan su desempeño y esfuerzos hacia la sostenibilidad:
+
+X1: Tasa de reciclaje (porcentaje del total de desechos reciclados).
+
+X2: Producción per cápita de energía renovable (en kWh).
+
+X3: Consumo per cápita de agua (en metros cúbicos).
+
+X4: Índice de calidad del aire (medido como el promedio anual de partículas PM2.5).
+
+X5: Extensión de áreas verdes por persona (en metros cuadrados).
+
+X6: Inversión en infraestructura sostenible (en millones de dólares).
+
+X7: Participación ciudadana en programas ambientales (en porcentaje de la población).
+
+X8: Eficiencia en la gestión de residuos (toneladas de residuos procesados por día).
+
+Dado el complejo panorama de indicadores para evaluar la sostenibilidad en estas ciudades, es crucial simplificar la información para entender mejor qué ciudades están liderando en prácticas sostenibles y cuáles necesitan mejorar. Considerando este objetivo, ¿cómo podrías consolidar estos múltiples indicadores para facilitar una comparación efectiva entre las ciudades?
+
+##Se utilizara el metodo de PCA
+
+```{r}
+library(readxl)
+ejercicio_3 <- read_excel("C:/Users/DELL/Documents/seminario/ejercicio 3.xlsx")
+ejercicio_3
+```
+
+```{r}
+data("ejercicio_3")
+head(ejercicio_3)
+str(ejercicio_3)
+```
+
+```{r}
+apply(X = ejercicio_3, MARGIN = 2, FUN = mean)
+```
+
+El PCA ha reducido la dimensionalidad del conjunto de datos de 8 variables a un conjunto de componentes principales que capturan la mayor parte de la variabilidad en los datos.
+
+```{r}
+apply(X = ejercicio_3, MARGIN = 2, FUN = var)
+```
+
+Una alta varianza en estas variables indica que los valores de esa variable están más dispersos, lo que podría significar una mayor variabilidad en la situación de cada ciudad en ese aspecto particular de la sostenibilidad y en este caso las variables mas altas son las siguientes:
+
+-   X3: Consumo per cápita de agua (en metros cúbicos).
+
+-   X2: Producción per cápita de energía renovable (en kWh).
+
+-   X6: Inversión en infraestructura sostenible (en millones de dólares).
+
+Por otro lado, una baja varianza indica que los valores tienden a estar más cercanos a la media, lo que podría indicar una mayor uniformidad en ese aspecto entre las ciudades
+
+```{r}
+pca <- prcomp(ejercicio_3, scale = TRUE)
+names(pca)
+```
+
+```{r}
+pca$center
+```
+
+-   Los números asociados a cada variable representan el promedio de esa variable antes de que se estandarice es decir, se reste la media y se divida por la desviación estándar durante el análisis de PCA.
+
+-   El valor 6.956154 para X1 indica que, en promedio, la Tasa de reciclaje en las ciudades evaluadas es de aproximadamente el 6.95% antes de aplicar el escalado durante PCA.
+
+-   El valor 14.914615 para X2 indica que, en promedio, la Producción per cápita de energía renovable es de aproximadamente 14.91 kWh antes del escalado.
+
+Y así sucesivamente para las demás variables.
+
+```{r}
+pca$scale
+```
+
+El valor 4.545149 para X1 indica que la Tasa de reciclaje tiene una desviación estándar de aproximadamente 4.55% antes del escalado durante PCA.
+
+El valor 8.164384 para X2 indica que la Producción per cápita de energía renovable tiene una desviación estándar de aproximadamente 8.16 kWh antes del escalado. Y
+
+así sucesivamente para las demás variables.
+
+```{r}
+pca$rotation
+```
+
+en PC1, las variables con los mayores valores absolutos mayores en magnitud son X6, X7, y X8. Esto significa que estas tres variables tienen una contribución significativa al primer componente principal. En PC2, las variables más influyentes son X1, X2, y X3, mientras que en PC3, las variables más influyentes son X4, X5, y X6.
+
+```{r}
+head(pca$x)
+```
+
+Cada valor en las celdas de pc\$x representa la proyección de una observación en el espacio definido por los componentes principales. Por ejemplo, en la primera fila de pca\$x, los números -2.66, 1.32, -0.67, -0.01, 0.03, 0.14, 0.09 y -0.01 indican la posición relativa de esa observación a lo largo de cada uno de los ocho componentes principales. Cuanto más cercanas estén dos observaciones en este espacio, mayor será su similitud en términos de las características originales que se han reducido a través del análisis de componentes principales.
+
+```{r}
+dim(pca$x)
+```
+
+significa que hay 13 observaciones en los datos originales y 8 componentes principales resultantes del análisis de componentes principales (PCA)
+
+```{r}
+biplot(x = pca, scale = 0, cex = 0.6, col = c("black", "purple"))
+```
+
+```{r}
+pca$rotation <- -pca$rotation
+pca$x        <- -pca$x
+biplot(x = pca, scale = 0, cex = 0.6, col = c("black", "purple"))
+```
+
+```{r}
+library(ggplot2)
+pca$sdev^2
+```
+
+El primer componente principal tiene una varianza explicada de aproximadamente 4.20. El segundo componente principal tiene una varianza explicada de aproximadamente 2.13. El tercer componente principal tiene una varianza explicada de aproximadamente 1.45. Y así sucesivamente para los demás componentes principales.
+
+```{r}
+library(ggplot2)
+pca$sdev^2
+```
+
+cada valor en la lista explica la varianza asociada con cada componente principal en orden descendente de importancia.
+
+```{r}
+prop_varianza <- pca$sdev^2 / sum(pca$sdev^2)
+prop_varianza
+```
+
+cada valor en la lista indica la proporción de varianza explicada por el componente principal correspondiente en relación con la varianza total de los datos.
+
+```{r}
+ggplot(data = data.frame(prop_varianza, pc = 1:4),
+       aes(x = pc, y = prop_varianza)) +
+  geom_col(width = 0.3) +
+  scale_y_continuous(limits = c(0,1)) +
+  theme_bw() +
+  labs(x = "Componente principal",
+       y = "Prop. de varianza explicada")
+```
+
+Al observar el grafico anterior se puede ver que los primeros tres componentes principales son los más importantes para comprender la estructura y la variabilidad en los datos.
+
+```{r}
+prop_varianza_acum <- cumsum(prop_varianza)
+prop_varianza_acum
+```
+
+El primer valor, 0.5253084, indica que el primer componente principal explica el 52.53% de la varianza total en los datos. El segundo valor, 0.7914753, muestra que los dos primeros componentes principales juntos explican el 79.15% de la varianza. El tercer valor, 0.9730814, indica que los tres primeros componentes principales explican el 97.31% de la varianza acumulada. Y así sucesivamente, hasta llegar al último valor de 1.0000000, que muestra que todos los componentes principales juntos explican el 100% de la varianza. como se tenia previsto.
+
+os primeros dos o tres componentes principales retienen la mayoría de la información en los datos originales, lo que sugiere que podrían ser suficientes para un análisis más simplificado sin perder mucha información.
+
+```{r}
+library(cluster)
+
+# Determinar el número óptimo de clusters
+wss <- numeric(10)
+for (i in 1:10) {
+  wss[i] <- sum(kmeans(pca$x[, 1:3], centers = i)$withinss)
+}
+plot(1:10, wss, type = "b", xlab = "Number of clusters", ylab = "Within-cluster sum of squares")
+
+# Aplicar k-means con el número óptimo de clusters
+k <- which.min(wss)
+clusters <- kmeans(pca$x[, 1:3], centers = k)
+```
+
+al elegir los numeros de clustes que son tres se puede observar en el grafico si estarian bien tomar esos datos.
+
+en este caso se hara de las variables anteriores que eran 8
+
+```{r}
+ggplot(data = data.frame(prop_varianza_acum, pc = 1:8),
+       aes(x = pc, y = prop_varianza_acum, group = 1)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Componente principal",
+       y = "Prop. varianza explicada acumulada")
+```
+
+**¿cómo podrías consolidar estos múltiples indicadores para facilitar una comparación efectiva entre las ciudades?**
+
+se puede hacer dividiendo las ciudades en tres clusters, donde se puede observar que algunas ciudades están liderando en prácticas sostenibles, representadas por un alto puntaje en sostenibilidad en comparación con otras ciudades que podrían beneficiarse de mejoras en sus iniciativas sostenibles debido a puntajes más bajos en los indicadores.
+
+## Ejercicio 4:
+
+```{r}
+library(readxl)
+ejercicio_4 <- read_excel("C:/Users/DELL/Documents/seminario/ejercicio 4.xlsx")
+ejercicio_4
+```
+
+```{r}
+datos<-(ejercicio_4)
+k.means.fit <-kmeans(datos[,2:3], 3, nstart = 10)
+k.means.fit 
+```
+
+En el resultado anterior se puede observar que indica que el 80.8% de la variabilidad total es explicada por la agrupación en 3 clusters.
+
+```{r}
+k.means.fit$centers
+```
+
+Estos valores dan una idea de cómo están distribuidos los datos alrededor los centros en cada cluster como para el cluster 1, las observaciones tienden a tener valores más altos en la variable tienda y valores también altos en la variable marca, mientras que para el cluster 3, las observaciones tienden a tener valores bajos en ambas variables.
+
+```{r}
+k.means.fit$ifault
+```
+
+este resultado es que no se ha producido ninguna falla o error durante el proceso de clustering mediante k-means.
+
+```{r}
+grupos=k.means.fit$cluster
+table(datos$Variables,grupos)
+```
+
+Cada celda de la tabla indica cuántas observaciones de la variable correspondiente están asignadas a cada grupo.
+
+```{r}
+library(dplyr)
+dif=data.frame(datos,grupos)
+dif=data.frame(dif) %>% 
+  mutate(grupos=dplyr::recode(grupos,
+                              "3"="A",
+                              "1"="B",
+                              "3"="C",
+                              "1"="D",
+                              "1"="E",
+                              "2"="F",
+                              "2"="G",
+                              "2"="H",
+                              "1"="I",
+                              "1"="J")) 
+table(dif$grupos,dif$Variable)
+```
+
+**Diferencia en la Lealtad:** Al observar los puntajes de lealtad hacia las tiendas y las marcas, se puede notar que hay una variación considerable entre los encuestados. Algunos muestran una mayor lealtad hacia las tiendas locales como los encuestados F y G, mientras que otros tienen una mayor lealtad hacia las marcas como encuestados B e I.
+
+**Relación entre Tienda y Marca:** También se puede notar que la lealtad hacia las tiendas y hacia las marcas no siempre está alineada. Por ejemplo, el encuestado F muestra una alta lealtad hacia la tienda puntaje de 9, pero una baja lealtad hacia la marca como puntaje de 3, lo que indica una desconexión entre su preferencia por la tienda local y la marca en sí misma.
+
+Aunque los datos son limitados ya que solo son 10 encuestados, se pueden observar patrones generales en las preferencias de los consumidores. Algunos tienen una lealtad equilibrada entre tienda y marca, mientras que otros muestran preferencias más marcadas hacia una u otra.
+
+```{r}
+d2 <- scale(datos[,2:3])
+rownames(d2) <- datos$Variables
+fviz_nbclust(x = d2, FUNcluster = kmeans, method = "wss", k.max = 9, 
+             diss = get_dist(d2, method = "euclidean"), nstart = 50)
+```
+
+Esta figura de números óptimos de clusters indica que, con los datos actuales, puede hacerse una clasificación de máximo 9 clusters, aunque ya se ha evidenciado que tres clusters pueden ser suficientes.
+
+```{r}
+d2f=data.frame(d2)
+km_clusters <- kmeans(x = d2f, centers = 3, nstart = 50)
+
+# Las funciones del paquete factoextra emplean el nombre de las filas del
+# dataframe que contiene los datos como identificador de las observaciones.
+# Esto permite añadir labels a los gráficos.
+fviz_cluster(object = km_clusters, data = d2f, show.clust.cent = TRUE,
+             ellipse.type = "euclid", star.plot = TRUE, repel = TRUE,
+             pointsize=0.5,outlier.color="black") +
+  labs(title = "Resultados clustering K-means") +
+  theme_bw() +  theme(legend.position = "none")
+```
+
+Se puede notar que las preferencias de las personas están influenciadas por su nivel de lealtad hacia la tienda o la marca. Por ejemplo, el encuestado F muestra una alta lealtad hacia la tienda con un nivel de 9, lo que indica que su preferencia se inclina más hacia la tienda que hacia la marca, ya que su lealtad hacia la marca es de 3.
+
+Al observar los clusters, se puede ver que en el grupo de color rojo se encuentran agrupados los encuestados D, B, E, J e I. En el grupo de color azul se encuentran agrupados los encuestados H, G y F. Mientras que en el grupo verde se encuentran agrupados los encuestados C y A.
+
+```{r}
+require(cluster)
+pam.res <- pam(d2f, 3)
+# Visualización
+fviz_cluster(pam.res, geom = "point", ellipse.type = "norm",
+             show.clust.cent = TRUE,star.plot = TRUE)+
+  labs(title = "Resultados clustering K-means")+ theme_bw()
+```
+
+en esta grafica se puede observar mejor como se distribuyen los cluster concentrandose mas las variables en el cluster 2 de color verde.
