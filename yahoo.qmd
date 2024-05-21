@@ -1,0 +1,148 @@
+---
+documentclass: article
+format: pdf
+editor: visual
+header-includes:
+- \usepackage[utf8]{inputenc} #para usar accentos
+# Formato de titulo de capitulo
+# Options: Sonny, Lenny, Glenn, Conny, Rejne, Bjarne, Bjornstrup
+- \usepackage[Lenny]{fncychap}
+- \usepackage{multirow}
+- \usepackage{float}
+- \usepackage[bottom=3.5cm, top=2cm, left=1in, right=1in]{geometry}
+- \usepackage{setspace}
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+#- \pagestyle{headings}
+#- \pagestyle{empty}
+- \usepackage{makeidx}
+- \usepackage{graphicx}
+- \usepackage{wrapfig}
+#- \renewcommand{\headrulewidth}{3pt}
+- \renewcommand{\baselinestretch}{1.5}
+- \renewcommand{\headrulewidth}{0.0001cm}
+lang: es
+---
+
+```{=tex}
+\thispagestyle{empty}
+\begin{center}\textbf{UNIVERSIDAD DE EL SALVADOR} \end{center}
+\begin{center}\textbf{FACULTAD MULTIDISCIPLINARIA DE OCCIDENTE} \end{center}
+\begin{center}\textbf{DEPARTAMENTO DE MATEMATICAS} \end{center}
+\begin{center}\includegraphics[width=0.5\textwidth]{yahoo_files/Imagen2.png} \end{center}
+\begin{center} \textbf{ANALISIS DE YAHOO} \end{center}
+\vspace{0.5cm}
+\begin{center}\textbf{CARRERA:} \end{center}
+\begin{center}\textbf{LICENCIATURA EN ESTADÍSTICA.} \end{center}
+\vspace{0.5cm}
+\begin{center}\textbf{ASIGNATURA:} \end{center}
+\begin{center}\textbf{ANALISIS DE SISTEMAS} \end{center}
+\vspace{0.5cm}
+\begin{center}\textbf{DOCENTE:} \end{center}
+\begin{center}\textbf{LICDA. Jaime Isaac Pena } \end{center}
+\vspace{0.5cm}
+\begin{center}\textbf{PRESENTADO POR:} \end{center}
+\begin{center}\textbf{Marlene Esmeralda Pimentel PA20026} \end{center}
+\begin{center}\textbf{Jeimy Merary Romero RS19036} \end{center} 
+\vspace{0.5cm}
+\begin{center}\textbf{FECHA:} \end{center}
+\begin{center}\textbf{21 DE JUNIO DE 2024} \end{center}
+```
+```{=tex}
+\tableofcontents
+\newpage
+\section{\textbf {Operaciones de Apple}}
+```
+```{python}
+!pip install yfinance
+
+```
+
+```{python}
+import yfinance as yf
+import pandas as pd
+```
+
+## se descarga la llama la base a usar 
+
+```{python}
+apple = yf.Ticker("AAPL")
+```
+
+```{python}
+apple_info=apple.info
+apple_info
+```
+
+```{python}
+apple_info['country']
+```
+
+```{python}
+historico_apple = apple.history(start='2010-01-01', end='2024-05-20')
+print(historico_apple)
+```
+
+```{python}
+historico_apple.head()
+```
+
+Si se quiere mostrar los diez primero registros de los datos de una sola columna; por ejemplo la columna de precio de la acción al cierre de la jornada
+
+```{python}
+print(historico_apple["Close"].head(10))
+```
+
+```{python}
+historico_apple.reset_index(inplace=True)
+```
+
+## Se grafica el precio al cierre por fecha.
+
+```{python}
+historico_apple.plot(x="Date", y="Close", color="black")
+```
+
+AL observar el grafico se puede decir que muestra la evolución del precio de cierre de las acciones de Apple a lo largo del tiempo donde se observar que el precio ha tendido a aumentar desde el año 2020 en adelante.
+
+```{python}
+apple.dividends
+```
+
+```{python}
+apple.dividends.plot()
+```
+
+```{python}
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Calcular el promedio móvil
+historico_apple['MA'] = historico_apple['Close'].rolling(window=30).mean()
+
+# Graficar
+plt.figure(figsize=(10, 6))
+plt.plot(historico_apple['Date'], historico_apple['Close'], label='Precio de cierre')
+plt.plot(historico_apple['Date'], historico_apple['MA'], label='Promedio móvil (30 días)')
+plt.xlabel('Fecha')
+plt.ylabel('Precio')
+plt.title('Precio de cierre de las acciones de Apple con promedio móvil')
+plt.legend()
+plt.show()
+```
+
+El código calcula el promedio móvil de 30 días del precio de cierre de las acciones de Apple y luego lo grafica junto con el precio de cierre original en función de la fecha.
+
+Se pueden observar cruces entre el precio de cierre y el promedio móvil donde no hay un cambio significativo.
+
+## Gráfico de barras de volumen de operaciones:
+
+El volumen de operaciones es la cantidad de acciones que se negocian en un período de tiempo determinado. Un gráfico de barras que muestra el volumen de operaciones junto con el precio de cierre puede proporcionar información sobre el interés de los inversores en un determinado período.
+
+```{python}
+historico_apple['Volume'].plot(kind='bar', figsize=(10, 6), color='black')
+plt.xlabel('Fecha')
+plt.ylabel('Volumen de operaciones')
+plt.title('Volumen de operaciones de las acciones de Apple')
+plt.show()
+```
